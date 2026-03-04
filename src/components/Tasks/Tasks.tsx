@@ -1,4 +1,4 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import styles from "./styles.module.scss";
 
 interface Task {
@@ -8,6 +8,7 @@ interface Task {
 }
 export const Tasks: React.FC = () => {
   const [taskTitle, setTaskTitle] = useState("");
+  const [taskValue, setTaskValue] = useState(false);
   const [tasks, setTasks] = useState([] as Task[]);
 
   function handleSubmitAddTask(event: FormEvent) {
@@ -17,9 +18,29 @@ export const Tasks: React.FC = () => {
       alert("Não é possível adicionar uma tarefa com menos de 3 letras!");
       return;
     }
-    setTasks([...tasks, { id: 1, title: taskTitle, done: false }]);
+    const newTasks = [
+      ...tasks,
+      { id: new Date().getTime(), title: taskTitle, done: taskValue },
+    ];
+    setTasks(newTasks);
+    localStorage.setItem("tasks", JSON.stringify(newTasks));
     setTaskTitle("");
   }
+
+  function handleToggleTaskStatus(id: number) {
+    const updatedTasks = tasks.map((task) => {
+      return task.id === id ? { ...task, done: !task.done } : task;
+    });
+    setTasks(updatedTasks);
+    localStorage.setItem("tasks", JSON.stringify(updatedTasks));
+  }
+
+  useEffect(() => {
+    const tasksOnLocalStorage = localStorage.getItem("tasks");
+    if (tasksOnLocalStorage) {
+      setTasks(JSON.parse(tasksOnLocalStorage));
+    }
+  }, []);
   return (
     <section className={styles.container}>
       <form onSubmit={handleSubmitAddTask}>
@@ -42,7 +63,11 @@ export const Tasks: React.FC = () => {
         {tasks.map((task) => {
           return (
             <li key={task.id}>
-              <input type="checkbox" id={`task-${task.id}`} />
+              <input
+                type="checkbox"
+                id={`task-${task.id}`}
+                onChange={() => handleToggleTaskStatus(task.id)}
+              />
               <label htmlFor={`task-${task.id}`}>{task.title}</label>
             </li>
           );
