@@ -1,15 +1,11 @@
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useContext, useEffect, useRef, useState } from "react";
 import styles from "./styles.module.scss";
+import { TasksContext } from "../../context/TasksContexts";
 
-interface Task {
-  title: string;
-  done: boolean;
-  id: number;
-}
 export const Tasks: React.FC = () => {
   const [taskTitle, setTaskTitle] = useState("");
-  const [taskValue, setTaskValue] = useState(false);
-  const [tasks, setTasks] = useState([] as Task[]);
+
+  const { tasks, setTasks } = useContext(TasksContext);
 
   function handleSubmitAddTask(event: FormEvent) {
     event.preventDefault();
@@ -20,7 +16,7 @@ export const Tasks: React.FC = () => {
     }
     const newTasks = [
       ...tasks,
-      { id: new Date().getTime(), title: taskTitle, done: taskValue },
+      { id: new Date().getTime(), title: taskTitle, done: false },
     ];
     setTasks(newTasks);
     localStorage.setItem("tasks", JSON.stringify(newTasks));
@@ -35,12 +31,6 @@ export const Tasks: React.FC = () => {
     localStorage.setItem("tasks", JSON.stringify(updatedTasks));
   }
 
-  useEffect(() => {
-    const tasksOnLocalStorage = localStorage.getItem("tasks");
-    if (tasksOnLocalStorage) {
-      setTasks(JSON.parse(tasksOnLocalStorage));
-    }
-  }, []);
   return (
     <section className={styles.container}>
       <form onSubmit={handleSubmitAddTask}>
@@ -68,7 +58,12 @@ export const Tasks: React.FC = () => {
                 id={`task-${task.id}`}
                 onChange={() => handleToggleTaskStatus(task.id)}
               />
-              <label htmlFor={`task-${task.id}`}>{task.title}</label>
+              <label
+                htmlFor={`task-${task.id}`}
+                className={task.done ? styles.done : ""}
+              >
+                {task.title}
+              </label>
             </li>
           );
         })}
